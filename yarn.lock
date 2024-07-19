@@ -7,6 +7,11 @@ as-bignum@^0.3.1:
   resolved "https://registry.yarnpkg.com/as-bignum/-/as-bignum-0.3.1.tgz#861a8970de9001b4bf4240031bf48b4af6e71163"
   integrity sha512-/RS4NbSPYUCRTsGNeCNA8aLjiyYlsEYaevY4Jwzj/QlzVk82t4gXdaWb8R3hnqo96g0MSIbhdaq18UcpeyW7gA==
 
+assemblyscript-json@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/assemblyscript-json/-/assemblyscript-json-1.1.0.tgz#49d38bc21f1ac36f2887528a35de6cf7d59c17be"
+  integrity sha512-UbE8ts8csTWQgd5TnSPN7MRV9NveuHv1bVnKmDLoo/tzjqxkmsZb3lu59Uk8H7SGoqdkDSEE049alx/nHnSdFw==
+
 assemblyscript@^0.27.29:
   version "0.27.29"
   resolved "https://registry.yarnpkg.com/assemblyscript/-/assemblyscript-0.27.29.tgz#6d18cd0c8892c78d442776777f02ed68d4d29411"
