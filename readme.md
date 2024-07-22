@@ -12,6 +12,8 @@ console.log(main(buffer));
 
 ```
 
+`yarn run asbuild && node index.js | jq`
+
 output:
 
 ```
