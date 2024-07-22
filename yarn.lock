@@ -25,26 +25,7 @@ binaryen@116.0.0-nightly.20240114:
   resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-116.0.0-nightly.20240114.tgz#ad8bfbde77d4cb4715b93997114eefc30f45155b"
   integrity sha512-0GZrojJnuhoe+hiwji7QFaL3tBlJoA+KFUN7ouYSDGZLSo9CKM8swQX8n/UcbR0d1VuZKU+nhogNzv423JEu5A==
 
-"fast-sha256-as@https://github.com/sandshrewmetaprotocols/fast-sha256-as":
-  version "0.1.0"
-  resolved "https://github.com/sandshrewmetaprotocols/fast-sha256-as#d6ecec4bfc2368aaed3029c2e0f48fe7c5f4be5c"
-  dependencies:
-    lodash "^4.17.21"
-
-lodash@^4.17.21:
-  version "4.17.21"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
-  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
-
 long@^5.2.1:
   version "5.2.3"
   resolved "https://registry.yarnpkg.com/long/-/long-5.2.3.tgz#a3ba97f3877cf1d778eccbcb048525ebb77499e1"
   integrity sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==
-
-"metashrew-as@https://github.com/sandshrewmetaprotocols/metashrew-as":
-  version "0.1.0"
-  resolved "https://github.com/sandshrewmetaprotocols/metashrew-as#4af80934e42679ec12dfa7466056fbabedd3669d"
-  dependencies:
-    as-bignum "^0.3.1"
-    fast-sha256-as "https://github.com/sandshrewmetaprotocols/fast-sha256-as"
-    lodash "^4.17.21"

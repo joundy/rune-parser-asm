@@ -1,19 +1,16 @@
 import { u128 } from "as-bignum/assembly";
-import { Box } from "metashrew-as/assembly/utils/box";
 import { JSONEncoder } from "assemblyscript-json/assembly";
-import { readULEB128ToU128 } from "./leb128";
 import { Field } from "./field";
 import { Flag } from "./flag";
-import { fieldToU128, fieldToName } from "./utils";
+import { fieldToU128, fieldToName, readULEB128ToU128, Box } from "./utils";
 import { Edict } from "./edicts";
 import { RuneId } from "./runeId";
 import { Option } from "./option";
 
 // TODO:
-// - change option with others solutions
 // - tests, validate edge cases
 // - write the data into repos
-class Runestone {
+class RunestoneParser {
   fields: Map<u64, Array<u128>>;
   edictsRaw: Array<StaticArray<u128>>;
 
@@ -25,7 +22,7 @@ class Runestone {
     this.edictsRaw = edictsRaw;
   }
 
-  static fromBuffer(buffer: ArrayBuffer): Runestone {
+  static fromBuffer(buffer: ArrayBuffer): RunestoneParser {
     const input = Box.from(buffer);
 
     const fields = new Map<u64, Array<u128>>();
@@ -34,7 +31,7 @@ class Runestone {
     while (input.len > 0) {
       const fieldKeyHeap = u128.from(0);
       const size = readULEB128ToU128(input, fieldKeyHeap);
-      if (size === usize.MAX_VALUE) return changetype<Runestone>(0);
+      if (size === usize.MAX_VALUE) return changetype<RunestoneParser>(0);
 
       input.shrinkFront(size);
 
@@ -45,7 +42,7 @@ class Runestone {
           for (let i = 0; i < 4; i++) {
             const edictInt = u128.from(0);
             const size = readULEB128ToU128(input, edictInt);
-            if (usize.MAX_VALUE === size) return changetype<Runestone>(0);
+            if (usize.MAX_VALUE === size) return changetype<RunestoneParser>(0);
             input.shrinkFront(size);
             edict[i] = edictInt;
           }
@@ -54,7 +51,7 @@ class Runestone {
       } else {
         const value = u128.from(0);
         const size = readULEB128ToU128(input, value);
-        if (usize.MAX_VALUE === size) return changetype<Runestone>(0);
+        if (usize.MAX_VALUE === size) return changetype<RunestoneParser>(0);
         input.shrinkFront(size);
         let field: Array<u128> = changetype<Array<u128>>(0);
         if (!fields.has(fieldKey)) {
@@ -67,7 +64,7 @@ class Runestone {
       }
     }
 
-    return new Runestone(fields, edictsRaw);
+    return new RunestoneParser(fields, edictsRaw);
   }
 
   private getFlag(position: u64): bool {
@@ -95,56 +92,56 @@ class Runestone {
     return new Option(value, true);
   }
 
-  get isEtching(): bool {
+  isEtching(): bool {
     return this.getFlag(Flag.ETCHING);
   }
 
-  get isTerms(): bool {
+  isTerms(): bool {
     return this.getFlag(Flag.TERMS);
   }
 
-  get rune(): Option<string> {
+  getRune(): Option<string> {
     const runeValue = this.getFieldValueU128(Field.RUNE);
-    if (!runeValue.exist) {
+    if (!runeValue.isSome) {
       return new Option("", false);
     }
     return new Option(fieldToName(runeValue.some), true);
   }
 
-  get premine(): Option<u128> {
+  getPremine(): Option<u128> {
     return this.getFieldValueU128(Field.PREMINE);
   }
 
-  get cap(): Option<u128> {
+  getCap(): Option<u128> {
     return this.getFieldValueU128(Field.CAP);
   }
 
-  get amount(): Option<u128> {
+  getAmount(): Option<u128> {
     return this.getFieldValueU128(Field.AMOUNT);
   }
 
-  get heightStart(): Option<u128> {
+  getHeightStart(): Option<u128> {
     return this.getFieldValueU128(Field.HEIGHTSTART);
   }
 
-  get heightEnd(): Option<u128> {
+  getHeightEnd(): Option<u128> {
     return this.getFieldValueU128(Field.HEIGHTEND);
   }
 
-  get offsetStart(): Option<u128> {
+  getOffsetStart(): Option<u128> {
     return this.getFieldValueU128(Field.OFFSETSTART);
   }
 
-  get offsetEnd(): Option<u128> {
+  getOffsetEnd(): Option<u128> {
     return this.getFieldValueU128(Field.OFFSETEND);
   }
 
-  get isMint(): bool {
+  getIsMint(): bool {
     return this.fields.has(Field.MINT);
   }
 
-  get mint(): Option<RuneId> {
-    if (!this.isMint) {
+  getMint(): Option<RuneId> {
+    if (!this.getIsMint()) {
       return new Option(changetype<RuneId>(0), false);
     }
 
@@ -159,25 +156,25 @@ class Runestone {
     return new Option(new RuneId(block, tx), true);
   }
 
-  get pointer(): Option<u32> {
+  getPointer(): Option<u32> {
     return this.getFieldValue<u32>(Field.POINTER);
   }
 
-  get divisibility(): Option<u8> {
+  getDivisibility(): Option<u8> {
     return this.getFieldValue<u8>(Field.DIVISIBILITY);
   }
 
-  get spacers(): Option<u32> {
+  getSpacers(): Option<u32> {
     return this.getFieldValue<u32>(Field.SPACERS);
   }
 
-  get edicts(): Array<Edict> {
+  getEdicts(): Array<Edict> {
     return Edict.fromDeltaSeries(this.edictsRaw);
   }
 
-  get symbol(): Option<string> {
+  getSymbol(): Option<string> {
     const symbolValue = this.getFieldValue<u32>(Field.SYMBOL);
-    if (!symbolValue.exist) {
+    if (!symbolValue.isSome) {
       return new Option("", false);
     }
     const symbol = String.fromCodePoint(symbolValue.some);
@@ -187,64 +184,79 @@ class Runestone {
   inspectJson(): string {
     const encoder = new JSONEncoder();
     encoder.pushObject(null);
-    if (this.pointer.exist) {
-      encoder.setInteger("pointer", this.pointer.some);
+    const pointer = this.getPointer();
+    if (pointer.isSome) {
+      encoder.setInteger("pointer", pointer.some);
     }
-    if (this.mint.exist) {
+    const mint = this.getMint();
+    if (mint.isSome) {
       encoder.pushObject("mint");
-      encoder.setInteger("block", this.mint.some.block);
-      encoder.setInteger("tx", this.mint.some.tx);
+      encoder.setInteger("block", mint.some.block);
+      encoder.setInteger("tx", mint.some.tx);
       encoder.popObject();
     }
 
-    if (this.isEtching) {
+    if (this.isEtching()) {
       encoder.pushObject("etching");
-      if (this.divisibility.exist) {
-        encoder.setInteger("divisibility", this.divisibility.some);
+
+      const divisibility = this.getDivisibility();
+      if (divisibility.isSome) {
+        encoder.setInteger("divisibility", divisibility.some);
       }
-      if (this.premine.exist) {
-        encoder.setString("premine", this.premine.some.toString());
+      const premine = this.getPremine();
+      if (premine.isSome) {
+        encoder.setString("premine", premine.some.toString());
       }
-      if (this.rune.exist) {
-        encoder.setString("rune", this.rune.some);
+      const rune = this.getRune();
+      if (rune.isSome) {
+        encoder.setString("rune", rune.some);
       }
-      if (this.spacers.exist) {
-        encoder.setInteger("spacers", this.spacers.some);
+      const spacers = this.getSpacers();
+      if (spacers.isSome) {
+        encoder.setInteger("spacers", spacers.some);
       }
-      if (this.symbol.exist) {
-        encoder.setString("symbol", this.symbol.some);
+      const symbol = this.getSymbol();
+      if (symbol.isSome) {
+        encoder.setString("symbol", symbol.some);
       }
 
-      if (this.isTerms) {
+      if (this.isTerms()) {
         encoder.pushObject("terms");
 
-        if (this.amount.exist) {
-          encoder.setString("amount", this.amount.some.toString());
+        const amount = this.getAmount();
+        if (amount.isSome) {
+          encoder.setString("amount", amount.some.toString());
         }
-        if (this.cap.exist) {
-          encoder.setString("cap", this.cap.some.toString());
+        const cap = this.getCap();
+        if (cap.isSome) {
+          encoder.setString("cap", cap.some.toString());
         }
-        if (this.heightStart.exist) {
-          encoder.setString("height_start", this.heightStart.some.toString());
+        const heightStart = this.getHeightStart();
+        if (heightStart.isSome) {
+          encoder.setString("height_start", heightStart.some.toString());
         }
-        if (this.heightEnd.exist) {
-          encoder.setString("height_end", this.heightEnd.some.toString());
+        const heightEnd = this.getHeightEnd();
+        if (heightEnd.isSome) {
+          encoder.setString("height_end", heightEnd.some.toString());
         }
-        if (this.offsetStart.exist) {
-          encoder.setString("offset_start", this.offsetStart.some.toString());
+        const offsetStart = this.getOffsetStart();
+        if (offsetStart.isSome) {
+          encoder.setString("offset_start", offsetStart.some.toString());
         }
-        if (this.offsetEnd.exist) {
-          encoder.setString("offset_end", this.offsetEnd.some.toString());
+        const offsetEnd = this.getOffsetEnd();
+        if (offsetEnd.isSome) {
+          encoder.setString("offset_end", offsetEnd.some.toString());
         }
 
         encoder.popObject();
       }
 
-      if (this.edicts.length > 0) {
+      const edicts = this.getEdicts();
+      if (edicts.length > 0) {
         encoder.pushArray("edicts");
 
-        for (let i: i32 = 0; i < this.edicts.length; i++) {
-          const edict = this.edicts[i];
+        for (let i: i32 = 0; i < edicts.length; i++) {
+          const edict = edicts[i];
           encoder.pushObject(null);
 
           encoder.pushObject("runeId");
@@ -271,6 +283,6 @@ class Runestone {
 }
 
 export function main(buffer: ArrayBuffer): string {
-  const rune = Runestone.fromBuffer(buffer);
+  const rune = RunestoneParser.fromBuffer(buffer);
   return rune.inspectJson();
 }
